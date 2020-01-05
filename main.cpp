@@ -2,10 +2,8 @@
 #include <fstream>
 #include <string>
 #include <vector>
-#include <stdio.h>
 #include <sstream>
 #include <ctime>
-
 
 #define INFINITY 9999999
 
@@ -105,7 +103,9 @@ void dijkstra(int **G, int n, int startnode) {
         }
         count++;
     }
-    delete[] cost;
+    for (i = 0 ; i < maxNode; i++)
+        delete[] cost[i];
+
     for (i = 0; i < n; i++)
         if (i != startnode) {
             j = i;
@@ -116,7 +116,7 @@ void dijkstra(int **G, int n, int startnode) {
 }
 
 int main() {
-    vector<int> graph = loadFile("..\\data\\newFile2.csv");
+    vector<int> graph = loadFile("..\\data\\newFile.csv");
     int **graphConverted = formatGraph(graph);
     //printMatrix(graphConverted);
     clock_t begin = clock();
