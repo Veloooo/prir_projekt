@@ -24,7 +24,7 @@ vector<int> loadFile(const string &path) {
                 if (i + 1 > maxNode)
                     maxNode = i + 1;
                 graph.push_back(i);
-                if (ss.peek() == ',')
+                if (ss.peek() == ';')
                     ss.ignore();
             }
         }
@@ -49,7 +49,7 @@ int **formatGraph(vector<int> inData) {
                 srcNode = inData[currentIndex * 3];
                 dstNode = inData[currentIndex * 3 + 1];
                 cost = inData[currentIndex * 3 + 2];
-                printf("%d %d\n", i, j);
+                //printf("%d %d\n", i, j);
             } else
                 graph[i][j] = 0;
         }
@@ -63,9 +63,15 @@ int **formatGraph(vector<int> inData) {
 }
 
 void dijkstra(int **G, int n, int startnode) {
-    printf("\nStart node : %d \n", startnode);
-    int cost[maxNode][maxNode], distance[maxNode], pred[maxNode];
+    printf("%d\n", startnode);
+    int **cost = new int *[maxNode];
+    int distance[maxNode], pred[maxNode];
     int visited[maxNode], count, mindistance, nextnode, i, j;
+    for (i = 0; i < n; i++) {
+        cost[i] = new int[maxNode];
+        for (j = 0; j < n; j++)
+            cost[i][j] = 0;
+    }
     for (i = 0; i < n; i++)
         for (j = 0; j < n; j++)
             if (G[i][j] == 0)
@@ -99,31 +105,20 @@ void dijkstra(int **G, int n, int startnode) {
         }
         count++;
     }
+    delete[] cost;
     for (i = 0; i < n; i++)
         if (i != startnode) {
-            cout << "\nDistance of node " << i << "=" << distance[i];
-            cout << "\nPath=" << i;
             j = i;
             do {
                 j = pred[j];
-                cout << "<-" << j;
             } while (j != startnode);
         }
 }
 
-void printMatrix(int **matrix) {
-    for (int i = 0; i < maxNode; i++) {
-        for (int j = 0; j < maxNode; j++) {
-            printf("%d ", matrix[i][j]);
-        }
-        printf("\n ");
-    }
-}
-
 int main() {
-    vector<int> graph = loadFile("..\\data\\data.csv");
+    vector<int> graph = loadFile("..\\data\\newFile2.csv");
     int **graphConverted = formatGraph(graph);
-    printMatrix(graphConverted);
+    //printMatrix(graphConverted);
     clock_t begin = clock();
     for (int i = 0; i < maxNode; i++)
         dijkstra(graphConverted, maxNode, i);
