@@ -4,13 +4,15 @@
 #include <vector>
 #include <sstream>
 #include <ctime>
+#include <mpi.h>
+#include <omp.h>
 
-#define INFINITY 9999999
+#define INFINITY2 9999999
 
 int maxNode = 0;
 using namespace std;
 
-vector<int> loadFile(const string &path) {
+vector<int> loadFile(const string path) {
     vector<int> graph;
     ifstream file;
     file.open(path);
@@ -73,7 +75,7 @@ void dijkstra(int **G, int n, int startnode) {
     for (i = 0; i < n; i++)
         for (j = 0; j < n; j++)
             if (G[i][j] == 0)
-                cost[i][j] = INFINITY;
+                cost[i][j] = INFINITY2;
             else
                 cost[i][j] = G[i][j];
     for (i = 0; i < n; i++) {
@@ -83,17 +85,18 @@ void dijkstra(int **G, int n, int startnode) {
     }
     distance[startnode] = 0;
     visited[startnode] = 1;
-    count = 1;
-    while (count < n - 1) {
-        mindistance = INFINITY;
-        for (i = 0; i < n; i++) {
+
+    #pragma omp parallel for schedule(runtime) num_threads(1) shared(distance,visited,pred)
+    for(int count = 1;count < n - 1; count++){
+		mindistance = INFINITY2;
+        for (int i = 0; i < n; i++) {
             if (distance[i] < mindistance && !visited[i]) {
                 mindistance = distance[i];
                 nextnode = i;
             }
         }
         visited[nextnode] = 1;
-        for (i = 0; i < n; i++) {
+        for (int i = 0; i < n; i++) {
             if (!visited[i]) {
                 if (mindistance + cost[nextnode][i] < distance[i]) {
                     distance[i] = mindistance + cost[nextnode][i];
@@ -101,7 +104,6 @@ void dijkstra(int **G, int n, int startnode) {
                 }
             }
         }
-        count++;
     }
     for (i = 0 ; i < maxNode; i++)
         delete[] cost[i];
@@ -115,15 +117,22 @@ void dijkstra(int **G, int n, int startnode) {
         }
 }
 
-int main() {
-    vector<int> graph = loadFile("..\\data\\newFile.csv");
+int main(int argc, char **argv) {
+    printf("starting...");
+    int MPI_rank,MPI_size;
+    MPI_Init(&argc,&argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &MPI_rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &MPI_size);
+    vector<int> graph = loadFile("newFile.csv");
     int **graphConverted = formatGraph(graph);
-    //printMatrix(graphConverted);
-    clock_t begin = clock();
-    for (int i = 0; i < maxNode; i++)
+    int i=0;
+    MPI_Barrier(MPI_COMM_WORLD);
+    double begin = MPI_Wtime();
+    for (i = MPI_rank; i < maxNode; i+=MPI_size)
         dijkstra(graphConverted, maxNode, i);
-    clock_t end = clock();
-    double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+    double end = MPI_Wtime();
+    double elapsed_secs = (end - begin);
     printf("\nTime: %f", elapsed_secs);
+    MPI_Finalize();
     return 0;
 }
